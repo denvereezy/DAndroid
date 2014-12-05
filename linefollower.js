@@ -1,22 +1,30 @@
 
 var five = require("johnny-five");
 var keypress = require('keypress');
+var Wheel = require("./wheels");
+var Robot = require("./robot");
 var ldr_left;
 var ldr_right;
 var ldr_middle;
 
+
 var board, 
-    left,
-    middle, 
-    right;
+    left_sensor,
+    middle_sensor, 
+    right_sensor;
 
   keypress(process.stdin);
 
   board = new five.Board();
   board.on("ready", function() {
-    
-          var left_wheel  = new five.Servo({ pin:  12, type: 'continuous' }).stop();
-          var right_wheel  = new five.Servo({ pin:  13, type: 'continuous' }).stop();
+        
+          var wheel1 = new Wheel(9, 8),
+              wheel2 = new Wheel(6,7);
+
+          var robot = new Robot(wheel1, wheel2); 
+          this.repl.inject({
+          robot : robot
+          });    
 
           process.stdin.resume(); 
           process.stdin.setEncoding('utf8'); 
@@ -33,114 +41,71 @@ var board,
               } else if ( key.name == 'up' ) {
 
                 console.log('Forward');
-                forward();
+                robot.forward();
                
               }else if ( key.name == 'down'){
                 console.log('Backwards');
-                backwards();
+                robot.reverse();
               
               }else if (key.name == 'left'){
                 console.log('left');
-                left();
+                robot.left();
               
               }else if (key.name == 'right'){
                 console.log('right');
-                right();
+                robot.right();
               
               }else if (key.name == 'space'){
                 console.log('stop');
-                stop();
+                robot.stop();
               }
           });
          
-
-
-          myPhotoresistor = new five.Sensor({
+          left_sensor = new five.Sensor({
             pin: "A0",
             freq: 500
           });
 
-          myPhotoresistor2 = new five.Sensor({
+          middle_sensor = new five.Sensor({
             pin: "A1",
             freq: 500
           });
             
 
-          myPhotoresistor3 = new five.Sensor({
+          right_sensor = new five.Sensor({
             pin: "A2",
             freq: 500
           });
 
-          myPhotoresistor.on("calibrated", function(err,value ) {
+          left_sensor.on("calibrated", function(err,value ) {
               console.log("calibrated",value );
               
 
           });
 
-          myPhotoresistor.on("read", function( err, value ) {
-        	   console.log(value);
-             //ldr_left = value;
-             ldrReadingChange("left", value);
+          left_sensor.on("read", function( err, value ) {
+        	   console.log(value, 'left');
+             if(value > 250){
+              robot.left();
+            }else robot.stop();
           });
 
-           var ldrReadingChange = function (side, value){
-            // compare the values
-            if (side === "left")
-              ldr_left = value;
-
-            
-
-            //if (ldr_left < ldr_middle)
-            //go(left, 200);
-
-            //if (ldr_left < ldr_middle)
-
-          }
-        	 
-
-          myPhotoresistor2.on("read", function( err, value ) {
-            if (value > 350){
-                 forward();
-                    }
-            console.log(value);
+          middle_sensor.on("read", function( err, value ) {
+            console.log(value, 'middle');
+            if(value > 260){
+              robot.forward();
+            }else if (value > 200){
+              robot.stop();
+            }
             
           });
 
-          myPhotoresistor3.on("read", function( err, value) {
-            console.log(value);
+          right_sensor.on("read", function( err, value) {
+            console.log(value, 'right');
+            if(value > 200){
+              robot.right();
+            }
           });
 
-         function go (direction, duration) {
-            
-            direction();
-
-            setTimeout(function() {
-              straight();
-            }, duration); 
-         }
-
-         function left () {
-            left_wheel.cw();
-            right_wheel.cw();            
-         }
-
-         function right (){
-           left_wheel.ccw();
-           right_wheel.ccw();
-          }
-
-         function backwards (){
-           left_wheel.cw();
-           right_wheel.ccw();
-         }
-
-        function forward (){
-          left_wheel.ccw();
-           right_wheel.cw();
-        }
-
-        function stop(){
-          left_wheel.stop();
-           right_wheel.stop();
-        }
+         
 });
