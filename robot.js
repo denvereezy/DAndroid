@@ -9,6 +9,15 @@ var Robot = function(rightWheel, leftWheel){
     return this;
   }
 
+  this.go = function(direction, duration){
+    var self = this;
+    self[direction]();
+    setTimeout(function(){
+      self.stop(); 
+    }, duration)
+
+  }
+
   this.right = function(cb){
     leftWheel.reverse();
     rightWheel.forward();
